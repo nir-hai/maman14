@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "pre_assembler.h"
 #include "error_handling.h"
 
@@ -17,62 +18,49 @@ int validate_file(char *filename) {
     return 1;
 }
 
-void remove_extra_spaces (char *filename)
-{
-  FILE *fp_in, *fp_out;
-  char post_rm_space[FILENAME_MAX];
-  char line[MAX_LINE_LENGTH];
-  int i, j, in_word;
+void remove_extra_spaces_to_temp(const char *src_filename) {
+    char temp_filename[1024];
+    snprintf(temp_filename, sizeof(temp_filename), "%s.t01", src_filename);
 
-  /* Create a new file named: filename.t01 */
-  strcpy(post_rm_space, filename);
-  strcat(post_rm_space, ".t01");
+    FILE *src = fopen(src_filename, "r");
+    if (!src) return;
 
-  fp_in = fopen(filename, "r"); /* the file was validated*/
-  fp_out = fopen(post_rm_space, "w");
-  if (fp_out == NULL) {
-    print_error_by_code(7, post_rm_space, 0);
-    fclose(fp_in);
-    return;
-  }
- while (fgets(line, MAX_LINE_LENGTH, fp_in)) {
-    if (line[0] == ';') {
-        fputc('\n', fp_out);
-        continue;
+    FILE *dest = fopen(temp_filename, "w");
+    if (!dest) {
+        fclose(src);
+        return;
     }
 
-    i = 0;
-    j = 0;
-
-    /* Skip leading spaces/tabs */
-    while (line[i] == ' ' || line[i] == '\t') i++;
-
-    in_word = 0;
-
-    while (line[i] != '\n' && line[i] != '\0') {
-        if (line[i] == ' ' || line[i] == '\t') {
-            if (in_word) {
-                line[j++] = ' ';
-                in_word = 0;
-            }
-        } else {
-            line[j++] = line[i];
-            in_word = 1;
+    char line[82]; /* 80 chars + '\n' + '\0' */
+    while (fgets(line, sizeof(line), src)) {
+        char *ptr = line;
+        while (isspace((unsigned char)*ptr)) ptr++;
+        if (*ptr == ';') {
+            fputs(line, dest);
+            continue;
         }
-        i++;
+        char cleaned[1024];
+        int i = 0, j = 0, in_space = 0;
+        while (isspace((unsigned char)line[i])) i++;
+        for (; line[i] != '\0' && line[i] != '\n'; i++) {
+            if (isspace((unsigned char)line[i])) {
+                if (!in_space) {
+                    cleaned[j++] = ' ';
+                    in_space = 1;
+                }
+            } else {
+                cleaned[j++] = line[i];
+                in_space = 0;
+            }
+        }
+        if (j > 0 && cleaned[j-1] == ' ')
+            j--;
+        cleaned[j++] = '\n';
+        cleaned[j] = '\0';
+        fputs(cleaned, dest);
     }
-
-    /* Remove trailing space if needed */
-    if (j > 0 && line[j - 1] == ' ')
-        j--;
-
-    line[j++] = '\n';
-    line[j] = '\0';
-
-    fputs(line, fp_out);
-}
-fclose(fp_in);
-fclose(fp_out);
+    fclose(src);
+    fclose(dest);
 }
 
 int main() {
@@ -80,7 +68,7 @@ int main() {
 
     if (validate_file(filename)) {
         printf("File validated successfully.\n");
-        remove_extra_spaces(filename);
+        remove_extra_spaces_to_temp(filename);
         printf("Extra spaces removed. Output saved in %s.t01\n", filename);
     } else {
         printf("File validation failed.\n");
