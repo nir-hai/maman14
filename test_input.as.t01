@@ -1,0 +1,7 @@
+; This is a comment line
+MOV @r3, @r1
+
+LOOP: ADD @r2, @r4
+
+
+STOP

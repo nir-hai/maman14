@@ -1,0 +1,3 @@
+/Users/nirhai/CLionProjects/assembler_final_project/cmake-build-debug/CMakeFiles/assembler_final_project.dir
+/Users/nirhai/CLionProjects/assembler_final_project/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/nirhai/CLionProjects/assembler_final_project/cmake-build-debug/CMakeFiles/rebuild_cache.dir
