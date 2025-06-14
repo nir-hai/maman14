@@ -5,6 +5,7 @@
 
 #ifndef ERROR_HANDLING_H
 #define ERROR_HANDLING_H
+#include "pre_assembler_ds.h"
 
 /**
 * @struct Error
@@ -29,6 +30,11 @@ extern Error errors[];
  * @param line_num The line number where the error occurred.
  */
 void print_error_by_code(int error_num, const char *file_name, int line_num);
-
+void remove_extra_spaces_to_temp(const char *src_filename);
+int is_macro_name(const char *word);
+Macro *get_macro(const char *name);
+void insert_macro(const char *name, MacroLine *lines_head);
+void write_modified_source(const char *filename, char **lines, int line_count);
+void free_macro_table(void);
 
 #endif //ERROR_HANDLING_H

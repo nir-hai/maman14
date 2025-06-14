@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "pre_assembler_ds.h" 
 #include "pre_assembler.h"
 
 Macro *macro_table = NULL; // Head of the macro table linked list
@@ -192,17 +193,46 @@ int main(int argc, char *argv[]) {
             continue; // Go to next line
         }
 
-        // Step 5: If the first word is "macro", start macro definition
-        if (!is_macro && strcmp(first_word, "macro") == 0) {
+        // Step 5: If the first word is "mcro", start macro definition
+        if (!is_macro && strcmp(first_word, "mcro") == 0) {
             is_macro = 1;
-            sscanf(line + i, "%s", macro_name); // Get macro name after "macro"
+            
+            // Skip whitespace after "mcro"
+            while (isspace((unsigned char)line[i])) i++;
+            
+            // Extract macro name
+            j = 0;
+            while (line[i] && !isspace((unsigned char)line[i]) && line[i] != '\n')
+                macro_name[j++] = line[i++];
+            macro_name[j] = '\0';
+            
+            // Check if there's anything else on the line after the macro name
+            while (isspace((unsigned char)line[i])) i++;
+            if (line[i] != '\0' && line[i] != '\n' && line[i] != '\r') {
+                // Error: Extra characters after macro name
+                printf("Error: Extra characters after macro name on line: %s", line);
+                // Call your error handling function here
+                // report_error(line_num, INVALID_MACRO_DEF);
+                return 1;
+            }
+            
             macro_lines_head = macro_lines_tail = NULL;
             continue; // Go to next line
         }
 
-        // Step 6: If inside macro definition, collect lines until "macroend"
+        // Step 6: If inside macro definition, collect lines until "mcroend"
         if (is_macro) {
-            if (strcmp(first_word, "macroend") == 0) {
+            if (strcmp(first_word, "mcroend") == 0) {
+                // Check if there's anything after "mcroend"
+                while (isspace((unsigned char)line[i])) i++;
+                if (line[i] != '\0' && line[i] != '\n' && line[i] != '\r') {
+                    // Error: Extra characters after mcroend
+                    printf("Error: Extra characters after mcroend on line: %s", line);
+                    // Call your error handling function here
+                    // report_error(line_num, INVALID_MACRO_END);
+                    return 1;
+                }
+                
                 insert_macro(macro_name, macro_lines_head); // Save macro
                 is_macro = 0; // End macro definition
                 macro_lines_head = macro_lines_tail = NULL;
